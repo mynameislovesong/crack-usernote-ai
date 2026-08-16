@@ -14,8 +14,8 @@ Crack 유저노트 내부에서 Gemini API 또는 Firebase AI Logic을 이용해
 - 압축 강도 `하·중·상·최상`
 - 작성/압축 모델과 검토 모델을 별도로 선택
 - 모델별 추론 강도 `하·중·상` 선택, 기본값 `중`
-- 작성/압축 권장: Gemini 3.6 Flash, 3.5 Flash
-- 검토 권장: Gemini 3.1 Pro
+- 작성/압축 권장: Gemini 3.7 Flash, 3.6 Flash, 3.5 Flash
+- 검토 권장: Gemini 3.1 Pro, Gemini 2.5 Pro
 - Firebase 기본 백엔드: Vertex AI Gemini API
 - 검토 결과를 별도 팝업으로 표시
 
