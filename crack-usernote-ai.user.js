@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Crack 유저노트 AI 정리·압축기
 // @namespace    https://github.com/mynameislovesong/crack-usernote-ai
-// @version      0.8.0
+// @version      0.9.0
 // @description  Crack 유저노트 안에서 Gemini/Firebase AI로 프롬프트를 작성·압축·검토합니다.
 // @author       mynameislovesong
 // @match        https://crack.wrtn.ai/*
@@ -277,7 +277,7 @@
 
   (function registerBackgroundRuntime() {
     const fetch = gmFetch;
-    const DEFAULT_GEMINI_MODEL = "gemini-3.6-flash";
+    const DEFAULT_GEMINI_MODEL = "gemini-3.7-flash";
     
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message?.type === "CRACK_USERNOTE_AI_GENERATE") {
@@ -401,12 +401,13 @@
     
     function buildGenerationConfig(model, reasoningLevel, firebase) {
       const level = ["low", "medium", "high"].includes(reasoningLevel) ? reasoningLevel : "medium";
-      const generationConfig = { temperature: 0.2 };
+      const isGemini3 = /^gemini-3(?:\.|-)/i.test(model);
+      const generationConfig = isGemini3 ? {} : { temperature: 0.2 };
       if (/^gemini-2\.5-/i.test(model)) {
         generationConfig.thinkingConfig = {
           thinkingBudget: { low: 1024, medium: 8192, high: 24576 }[level]
         };
-      } else if (/^gemini-3(?:\.|-)/i.test(model)) {
+      } else if (isGemini3) {
         generationConfig.thinkingConfig = {
           thinkingLevel: firebase ? level.toUpperCase() : level
         };
@@ -448,14 +449,14 @@
     const STORAGE_KEY = "crackUserNoteAISettingsV1";
     const USER_NOTE_PATTERN = /유저\s*노트|유저노트|user\s*note/i;
     const GEMINI_MODELS = [
+      { id: "gemini-3.7-flash", label: "3.7 Flash" },
       { id: "gemini-3.6-flash", label: "3.6 Flash" },
       { id: "gemini-3.5-flash", label: "3.5 Flash" },
       { id: "gemini-3.1-pro-preview", label: "3.1 Pro" },
-      { id: "gemini-2.5-pro", label: "2.5 Pro" },
-      { id: "gemini-2.5-flash", label: "2.5 Flash" }
+      { id: "gemini-2.5-pro", label: "2.5 Pro" }
     ];
     const GEMINI_MODEL_IDS = new Set(GEMINI_MODELS.map((model) => model.id));
-    const DEFAULT_WRITING_MODEL = "gemini-3.6-flash";
+    const DEFAULT_WRITING_MODEL = "gemini-3.7-flash";
     const DEFAULT_REVIEW_MODEL = "gemini-3.1-pro-preview";
   
     const FORMAT_RULES = `당신은 캐릭터/RP/AU/세계관 설정 정리 도우미임.
@@ -900,7 +901,7 @@
               <select class="cuai-select" data-setting="geminiReviewReasoningLevel">${reasoningOptionsHtml()}</select>
             </div>
           </div>
-          <div class="cuai-help">기본값: 작성/압축 3.6 Flash · 검토 3.1 Pro. 3.1 Pro는 결제 설정과 API 접근 권한이 필요할 수 있습니다.</div>
+          <div class="cuai-help">기본값: 작성/압축 3.7 Flash · 검토 3.1 Pro. 3.1 Pro는 결제 설정과 API 접근 권한이 필요할 수 있습니다.</div>
         `;
         holder.querySelector('[data-setting="geminiApiKey"]').value = settings.geminiApiKey;
         holder.querySelector('[data-setting="geminiModel"]').value = settings.geminiModel;
@@ -954,8 +955,8 @@
     function modelOptionsHtml(purpose) {
       return GEMINI_MODELS.map((model) => {
         const recommended = purpose === "review"
-          ? model.id === "gemini-3.1-pro-preview"
-          : ["gemini-3.6-flash", "gemini-3.5-flash"].includes(model.id);
+          ? ["gemini-3.1-pro-preview", "gemini-2.5-pro"].includes(model.id)
+          : ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash"].includes(model.id);
         return `<option value="${escapeAttr(model.id)}">${escapeHtml(model.label + (recommended ? " (권장)" : ""))}</option>`;
       }).join("");
     }
